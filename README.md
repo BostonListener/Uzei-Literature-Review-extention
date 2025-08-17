@@ -90,15 +90,6 @@ uzei-literature-review-extension/
 - **Select text** on a page, right-click, and choose "Add selected text to Uzei Literature Review"
 - **Use batch options** from the context menu to process multiple tabs
 
-## Status Indicators
-
-The extension provides visual feedback through badge indicators:
-
-- ✅ **Green Checkmark**: Valid content detected and logged in
-- ❓ **Yellow Question Mark**: Valid content but not logged in
-- ❗ **Red Exclamation**: Invalid content or processing error
-- ⏳ **"..."**: Content validation in progress
-
 ## Supported Content Types
 
 ### Webpages
@@ -113,37 +104,6 @@ The extension provides visual feedback through badge indicators:
 - Any PDF opened in the browser
 - Server-side text extraction and analysis
 
-### Academic Publishers
-Enhanced support for:
-- IEEE Xplore
-- ACM Digital Library
-- ScienceDirect
-- Springer
-- arXiv
-- PubMed
-- And many more
-
-## Troubleshooting
-
-### Extension Not Working
-- Ensure you're logged into the web app
-- Check that Developer mode is enabled
-- Try refreshing the page and clicking the extension icon again
-
-### Content Not Detected
-- Verify the page has sufficient text content (minimum 200 characters)
-- Some dynamic content may require page refresh
-- PDFs should be opened directly in Chrome's built-in viewer
-
-### Login Issues
-- Visit the web app directly and log in
-- Click "Test Connection" in the extension settings
-- Clear browser cookies if session issues persist
-
-### Badge Not Updating
-- The extension automatically checks content validity
-- For faster updates, refresh the page or click the extension icon
-
 ## Extension Settings
 
 Access settings by:
@@ -156,24 +116,6 @@ Available settings:
 - Enable context menus
 - Content length limits
 - Badge display preferences
-
-## Development Notes
-
-This extension is designed for internal testing and development. It connects to the production Uzei Literature Review web application and requires valid user authentication.
-
-### File Structure
-- `manifest.json`: Extension configuration and permissions
-- `background.js`: Service worker for tab monitoring and session management
-- `content.js`: Content extraction and PDF detection logic
-- `popup.html/js`: Main extension interface
-- `options.html/js`: Settings and configuration page
-
-### Key Features for Developers
-- Enhanced PDF URL detection and processing
-- Academic publisher-specific content extraction
-- Robust error handling for tab operations
-- Session-based authentication with the web app
-- Batch processing with concurrency controls
 
 ## Support
 

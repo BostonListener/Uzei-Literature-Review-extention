@@ -33,6 +33,8 @@ uzei-literature-review-extension/
 ├── popup.js
 ├── options.html
 ├── options.js
+├── README.md
+├── LICENSE
 └── icons/
     ├── icon16.png
     ├── icon48.png

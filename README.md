@@ -133,7 +133,8 @@ For issues or questions:
 **Compatibility**: Chrome (Manifest V3)  
 **Web App**: https://uzei.bostonlistener-career.org
 
-Help Us Keep This Project Running
+## Help Us Keep This Project Running
+
 If you find this extension helpful, consider supporting our development:
 <p align="center">
   <img src="icons/QRcode/venmo.jpg" alt="Support us on Venmo" width="200">

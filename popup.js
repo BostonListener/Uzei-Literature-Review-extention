@@ -3,7 +3,7 @@
  * Popup Script
  * 
  * Handles popup UI interactions, content extraction,
- * project management, and batch processing.
+ * project management, batch processing, and auto-closing of processed tabs.
  */
 
 // Popup configuration settings
@@ -24,6 +24,9 @@ const CONFIG = {
   MAX_CONCURRENT_TABS: 3,  // Process tabs simultaneously
   TAB_PROCESSING_DELAY: 500,  // Delay between tab processing (ms)
   
+  // Auto-close settings
+  AUTO_CLOSE_DELAY: 2000,  // 2 seconds delay before closing tab
+  
   // Tab filtering - exclude these from processing
   INVALID_PROTOCOLS: ['chrome:', 'chrome-extension:', 'moz-extension:', 'about:', 'data:', 'javascript:'],
   INVALID_HOSTS: ['uzei.bostonlistener-career.org'],  // Don't process our own app
@@ -39,6 +42,83 @@ let isProcessing = false;
 let currentRequestId = null;
 let batchProcessingActive = false;
 let loginStatus = { isLoggedIn: false, username: null };
+let extensionSettings = {
+  autoCloseProcessedTabs: true  // Default to true, will be loaded from storage
+};
+
+/**
+ * Load extension settings from storage
+ */
+async function loadExtensionSettings() {
+  try {
+    const settings = await new Promise((resolve) => {
+      chrome.storage.sync.get([
+        'autoCloseProcessedTabs',
+        'showNotifications'
+      ], resolve);
+    });
+    
+    extensionSettings = {
+      autoCloseProcessedTabs: settings.autoCloseProcessedTabs !== false,  // Default to true
+      showNotifications: settings.showNotifications !== false
+    };
+    
+    console.log('Extension settings loaded:', extensionSettings);
+  } catch (error) {
+    console.error('Error loading extension settings:', error);
+    // Use defaults
+    extensionSettings = {
+      autoCloseProcessedTabs: true,
+      showNotifications: true
+    };
+  }
+}
+
+/**
+ * Auto-close a tab after successful processing
+ */
+async function autoCloseTab(tabId, tabTitle = 'Unknown') {
+  if (!extensionSettings.autoCloseProcessedTabs) {
+    console.log(`Auto-close disabled, skipping tab ${tabId}`);
+    return;
+  }
+  
+  try {
+    console.log(`Scheduling auto-close for tab ${tabId} (${tabTitle}) in ${CONFIG.AUTO_CLOSE_DELAY}ms`);
+    
+    // Add a delay to let users see the success status
+    setTimeout(async () => {
+      try {
+        // Double-check that tab still exists before closing
+        const exists = await tabExists(tabId);
+        if (!exists) {
+          console.log(`Tab ${tabId} already closed, skipping auto-close`);
+          return;
+        }
+        
+        // Close the tab
+        await chrome.tabs.remove(tabId);
+        console.log(`✅ Auto-closed successfully processed tab: ${tabTitle} (ID: ${tabId})`);
+        
+        // Show notification if enabled
+        if (extensionSettings.showNotifications) {
+          chrome.runtime.sendMessage({
+            action: 'showNotification',
+            title: 'Tab Auto-Closed',
+            message: `Closed: ${tabTitle}`
+          });
+        }
+        
+      } catch (error) {
+        console.warn(`Failed to auto-close tab ${tabId}:`, error.message);
+        // Don't show error notifications for auto-close failures
+      }
+    }, CONFIG.AUTO_CLOSE_DELAY);
+    
+  } catch (error) {
+    console.warn(`Error scheduling auto-close for tab ${tabId}:`, error.message);
+  }
+}
 
 /**
  * Enhanced PDF URL detection with comprehensive patterns
@@ -716,6 +796,14 @@ async function populateTabList() {
     return;
   }
   
+  // Add auto-close indicator if enabled
+  if (extensionSettings.autoCloseProcessedTabs) {
+    const autoCloseInfo = document.createElement('div');
+    autoCloseInfo.style.cssText = 'padding: 8px 12px; background: #e7f3ff; border: 1px solid #bee5eb; border-radius: 4px; margin-bottom: 8px; font-size: 12px; color: #0c5460;';
+    autoCloseInfo.innerHTML = '🗂️ <strong>Auto-close enabled:</strong> Successfully processed tabs will be automatically closed after 2 seconds.';
+    tabList.appendChild(autoCloseInfo);
+  }
+  
   // Create tab items
   for (const tab of validTabs) {
     // Verify tab still exists before creating UI element
@@ -1138,7 +1226,8 @@ function updateMultiTabUI() {
   } else if (!hasValidProject) {
     processButton.textContent = 'Select Project First';
   } else {
-    processButton.textContent = `Process ${selectedTabs.length} Selected Tab${selectedTabs.length > 1 ? 's' : ''}`;
+    const autoCloseText = extensionSettings.autoCloseProcessedTabs ? ' (Auto-close)' : '';
+    processButton.textContent = `Process ${selectedTabs.length} Selected Tab${selectedTabs.length > 1 ? 's' : ''}${autoCloseText}`;
   }
 }
 
@@ -1236,6 +1325,11 @@ async function processSelectedTabs() {
         if (result.success) {
           successful++;
           addBatchResult(`✓ ${result.title}`, 'success');
+          
+          // Auto-close the successfully processed tab
+          if (extensionSettings.autoCloseProcessedTabs) {
+            await autoCloseTab(tabId, result.title);
+          }
         } else {
           failed++;
           addBatchResult(`✗ ${result.error}`, 'error');
@@ -1261,8 +1355,11 @@ async function processSelectedTabs() {
   await Promise.all(processingPromises);
   
   // Show final results
-  showStatus(`Batch processing complete: ${successful} successful, ${failed} failed`, 
-             successful > 0 ? 'success' : 'error');
+  const statusMessage = extensionSettings.autoCloseProcessedTabs 
+    ? `Batch processing complete: ${successful} successful (auto-closed), ${failed} failed`
+    : `Batch processing complete: ${successful} successful, ${failed} failed`;
+  
+  showStatus(statusMessage, successful > 0 ? 'success' : 'error');
   
   // Reset UI
   batchProcessingActive = false;
@@ -1279,6 +1376,13 @@ async function processSelectedTabs() {
         option.textContent = `${project.name} (${project.papers_count} papers)`;
       }
     }
+  }
+  
+  // Refresh tab list to remove auto-closed tabs
+  if (extensionSettings.autoCloseProcessedTabs && successful > 0) {
+    setTimeout(() => {
+      loadAllTabs();
+    }, CONFIG.AUTO_CLOSE_DELAY + 1000);
   }
 }
 
@@ -1572,6 +1676,12 @@ async function addToProject() {
       
       // Keep button disabled to prevent double-adding
       addButton.textContent = 'Added ✓';
+      
+      // Auto-close current tab if enabled (single tab mode)
+      if (extensionSettings.autoCloseProcessedTabs && currentTab) {
+        showStatus('✅ Successfully added to project! Tab will auto-close in 2 seconds...', 'success');
+        await autoCloseTab(currentTab.id, currentPageData.title);
+      }
     } else {
       throw new Error(response.error || 'Unknown error occurred');
     }
@@ -1691,6 +1801,9 @@ async function initialize() {
   }
   window.popupInitialized = true;
   
+  // Load extension settings first
+  await loadExtensionSettings();
+  
   // Set initial login status indicator
   const loginStatusEl = document.getElementById('login-status');
   if (loginStatusEl) {
@@ -1795,5 +1908,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       disableUI();
       showLoginPrompt();
     }
+  }
+  
+  if (request.action === 'settingsUpdated') {
+    // Reload extension settings when updated
+    loadExtensionSettings().then(() => {
+      updateMultiTabUI(); // Update UI to reflect new settings
+    });
   }
 });

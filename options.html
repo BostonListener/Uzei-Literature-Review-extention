@@ -129,6 +129,27 @@
             color: #495057;
         }
         
+        /* Enhanced checkbox with description */
+        .form-check-enhanced {
+            display: block;
+            margin-bottom: 16px;
+            padding: 12px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            background: #f8f9fa;
+        }
+        
+        .form-check-enhanced .form-check {
+            margin-bottom: 4px;
+        }
+        
+        .form-check-enhanced .form-check-description {
+            font-size: 12px;
+            color: #6c757d;
+            margin-left: 24px;
+            line-height: 1.4;
+        }
+        
         /* Button styles */
         .btn {
             padding: 12px 24px;
@@ -335,6 +356,20 @@
                 Enable multi-tab batch processing
             </label>
         </div>
+        
+        <!-- Auto-close processed tabs setting -->
+        <div class="form-check-enhanced">
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="auto-close-processed-tabs" checked>
+                <label class="form-check-label" for="auto-close-processed-tabs">
+                    <strong>Auto-close successfully processed tabs</strong>
+                </label>
+            </div>
+            <div class="form-check-description">
+                Automatically close tabs after they are successfully processed and added to your project. 
+                Perfect for literature review workflows with many paper tabs. Only successfully processed tabs are closed - failed tabs remain open for retry.
+            </div>
+        </div>
     </div>
 
     <!-- Content extraction settings -->
@@ -362,7 +397,7 @@
 
     <!-- How to use guide -->
     <div class="card">
-        <h3>📝 How to Use</h3>
+        <h3>📖 How to Use</h3>
         
         <!-- Getting started instructions -->
         <div class="alert alert-info">
@@ -379,16 +414,21 @@
         <!-- Extension features -->
         <p><strong>Extension Features:</strong></p>
         <ul>
-            <li>🔍 <strong>Content Analysis:</strong> Automatically extracts and analyzes webpage content</li>
-            <li>📄 <strong>PDF Support:</strong> Can process PDF documents opened in the browser</li>
+            <li>📄 <strong>Content Analysis:</strong> Automatically extracts and analyzes webpage content</li>
+            <li>📑 <strong>PDF Support:</strong> Can process PDF documents opened in the browser</li>
             <li>📊 <strong>Multi-tab Processing:</strong> Add multiple tabs to your literature review at once</li>
             <li>✅ <strong>Smart Validation:</strong> Badge indicators show which tabs have valid content</li>
             <li>🔄 <strong>Session Sync:</strong> Automatically detects when you're logged in</li>
+            <li>🗂️ <strong>Auto-Close:</strong> Automatically closes processed tabs to reduce clutter</li>
         </ul>
         
         <!-- Supported content types -->
         <p><strong>Supported Content:</strong></p>
         <p>Works best with article-style content including research papers, blog posts, news articles, documentation pages, and PDF documents.</p>
+        
+        <!-- Literature Review Workflow -->
+        <p><strong>Literature Review Workflow:</strong></p>
+        <p>Perfect for researchers who open 30-40 paper tabs. The extension processes each tab and automatically closes successfully processed ones, leaving you with only unprocessed tabs and clear progress indication.</p>
     </div>
 
     <!-- Save and reset buttons -->

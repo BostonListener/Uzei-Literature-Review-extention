@@ -18,7 +18,6 @@ const DEFAULT_CONFIG = {
   SHOW_BADGES: true,
   CONTEXT_MENU: true,
   ENABLE_MULTI_TAB: true,
-  AUTO_CLOSE_PROCESSED_TABS: true,
   
   // Content extraction defaults
   MIN_CONTENT_LENGTH: 200,
@@ -159,7 +158,6 @@ async function loadSettings() {
         'showBadges',
         'contextMenu',
         'enableMultiTab',
-        'autoCloseProcessedTabs',
         'minContentLength',
         'maxContentLength'
       ], resolve);
@@ -171,7 +169,6 @@ async function loadSettings() {
     document.getElementById('show-badges').checked = settings.showBadges !== false;
     document.getElementById('context-menu').checked = settings.contextMenu !== false;
     document.getElementById('enable-multi-tab').checked = settings.enableMultiTab !== false;
-    document.getElementById('auto-close-processed-tabs').checked = settings.autoCloseProcessedTabs !== false;
     document.getElementById('min-content-length').value = settings.minContentLength || DEFAULT_CONFIG.MIN_CONTENT_LENGTH;
     document.getElementById('max-content-length').value = settings.maxContentLength || DEFAULT_CONFIG.MAX_CONTENT_LENGTH;
     
@@ -195,7 +192,6 @@ async function saveSettings() {
       showBadges: document.getElementById('show-badges').checked,
       contextMenu: document.getElementById('context-menu').checked,
       enableMultiTab: document.getElementById('enable-multi-tab').checked,
-      autoCloseProcessedTabs: document.getElementById('auto-close-processed-tabs').checked,
       minContentLength: parseInt(document.getElementById('min-content-length').value),
       maxContentLength: parseInt(document.getElementById('max-content-length').value)
     };

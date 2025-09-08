@@ -541,6 +541,17 @@
         .btn-refresh:hover {
             background: #1e7e34;
         }
+        
+        /* Tab close confirmation info */
+        .tab-close-info {
+            background: #e7f3ff;
+            border: 1px solid #bee5eb;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: #0c5460;
+        }
     </style>
 </head>
 <body>
@@ -563,6 +574,11 @@
 
     <!-- Multi-tab processing section -->
     <div class="tab-list-section" id="multi-tab-section">
+        <!-- Tab close confirmation info -->
+        <div class="tab-close-info">
+            📝 <strong>Batch Processing:</strong> After processing, you'll be asked if you want to close successfully processed tabs to keep your workspace organized.
+        </div>
+        
         <!-- Tab selection controls -->
         <div class="tab-controls">
             <span class="tab-count" id="tab-count">Loading tabs...</span>

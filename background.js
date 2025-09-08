@@ -3,7 +3,7 @@
  * Background Service Worker
  * 
  * Handles tab monitoring, session authentication, context menus,
- * communication between content scripts and popup, and auto-close functionality.
+ * communication between content scripts and popup.
  */
 
 // Extension configuration
@@ -29,9 +29,6 @@ const CONFIG = {
   // Session checking
   SESSION_CHECK_INTERVAL: 300000, // 5 minutes
   SESSION_COOKIE_NAME: 'session',
-  
-  // Auto-close settings
-  AUTO_CLOSE_DELAY: 2000,  // 2 seconds delay before closing
   
   // PDF detection patterns
   PDF_URL_PATTERNS: [
@@ -60,7 +57,6 @@ let tabValidityCache = new Map();
 let pendingValidityChecks = new Set();
 let userLoginStatus = { isLoggedIn: false, username: null, lastCheck: 0 };
 let extensionSettings = {
-  autoCloseProcessedTabs: true,  // Default to true
   showNotifications: true,
   showBadges: true,
   contextMenu: true,
@@ -75,7 +71,6 @@ async function loadExtensionSettings() {
   try {
     const settings = await new Promise((resolve) => {
       chrome.storage.sync.get([
-        'autoCloseProcessedTabs',
         'showNotifications', 
         'showBadges',
         'contextMenu',
@@ -85,7 +80,6 @@ async function loadExtensionSettings() {
     });
     
     extensionSettings = {
-      autoCloseProcessedTabs: settings.autoCloseProcessedTabs !== false,  // Default to true
       showNotifications: settings.showNotifications !== false,
       showBadges: settings.showBadges !== false,
       contextMenu: settings.contextMenu !== false,
@@ -106,65 +100,12 @@ async function loadExtensionSettings() {
     console.error('Error loading extension settings in background:', error);
     // Use defaults
     extensionSettings = {
-      autoCloseProcessedTabs: true,
       showNotifications: true,
       showBadges: true,
       contextMenu: true,
       enableMultiTab: true,
       autoExtract: true
     };
-  }
-}
-
-/**
- * Auto-close a tab after successful processing
- */
-async function autoCloseTab(tabId, tabTitle = 'Unknown', delay = CONFIG.AUTO_CLOSE_DELAY) {
-  if (!extensionSettings.autoCloseProcessedTabs) {
-    console.log(`Auto-close disabled in settings, skipping tab ${tabId}`);
-    return false;
-  }
-  
-  try {
-    console.log(`Background: Scheduling auto-close for tab ${tabId} (${tabTitle}) in ${delay}ms`);
-    
-    // Add a delay to let users see the success status
-    setTimeout(async () => {
-      try {
-        // Double-check that tab still exists before closing
-        const exists = await tabExists(tabId);
-        if (!exists) {
-          console.log(`Background: Tab ${tabId} already closed, skipping auto-close`);
-          return;
-        }
-        
-        // Close the tab
-        await chrome.tabs.remove(tabId);
-        console.log(`Background: ✅ Auto-closed successfully processed tab: ${tabTitle} (ID: ${tabId})`);
-        
-        // Show notification if enabled
-        if (extensionSettings.showNotifications) {
-          chrome.notifications.create({
-            type: 'basic',
-            iconUrl: 'icons/icon48.png',
-            title: 'Literature Review - Tab Auto-Closed',
-            message: `Successfully processed and closed: ${tabTitle}`
-          });
-        }
-        
-        return true;
-        
-      } catch (error) {
-        console.warn(`Background: Failed to auto-close tab ${tabId}:`, error.message);
-        return false;
-      }
-    }, delay);
-    
-    return true;
-    
-  } catch (error) {
-    console.warn(`Background: Error scheduling auto-close for tab ${tabId}:`, error.message);
-    return false;
   }
 }
 
@@ -332,17 +273,15 @@ function createContextMenus() {
         contexts: ['page']
       });
       
-      const autoCloseText = extensionSettings.autoCloseProcessedTabs ? ' (Auto-close)' : '';
-      
       chrome.contextMenus.create({
         id: 'add-all-tabs',
-        title: `Add all valid tabs to Uzei Literature Review${autoCloseText}`,
+        title: 'Add all valid tabs to Uzei Literature Review',
         contexts: ['page']
       });
       
       chrome.contextMenus.create({
         id: 'add-selected-tabs',
-        title: `Select tabs to add...${autoCloseText}`,
+        title: 'Select tabs to add...',
         contexts: ['page']
       });
     }
@@ -692,14 +631,13 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     if (details.reason === 'install') {
       console.log('Uzei - Literature Review extension installed');
       
-      // Set default settings including auto-close
+      // Set default settings
       await chrome.storage.sync.set({
         autoExtract: true,
         showNotifications: true,
         enableMultiTab: true,
         showBadges: true,
-        contextMenu: true,
-        autoCloseProcessedTabs: true  // NEW: Default to enabled
+        contextMenu: true
       });
       
       // Open options page on first install
@@ -811,8 +749,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       'showNotifications',
       'enableMultiTab',
       'showBadges',
-      'contextMenu',
-      'autoCloseProcessedTabs'  // NEW setting
+      'contextMenu'
     ], (result) => {
       sendResponse({
         appUrl: CONFIG.APP_BASE_URL,
@@ -820,8 +757,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         showNotifications: result.showNotifications !== false,
         enableMultiTab: result.enableMultiTab !== false,
         showBadges: result.showBadges !== false,
-        contextMenu: result.contextMenu !== false,
-        autoCloseProcessedTabs: result.autoCloseProcessedTabs !== false  // NEW
+        contextMenu: result.contextMenu !== false
       });
     });
     return true;
@@ -841,17 +777,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       });
     });
     sendResponse({ success: true });
-    return true;
-  }
-  
-  // Handle auto-close requests
-  if (request.action === 'autoCloseTab') {
-    const { tabId, tabTitle, delay } = request;
-    autoCloseTab(tabId, tabTitle, delay).then(success => {
-      sendResponse({ success });
-    }).catch(error => {
-      sendResponse({ success: false, error: error.message });
-    });
     return true;
   }
   
@@ -922,15 +847,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   
   // Handle batch processing completion
   if (request.action === 'batchProcessComplete') {
-    const { successful, failed, total, autoClosedTabs } = request;
-    
-    const autoCloseText = autoClosedTabs > 0 ? ` ${autoClosedTabs} tabs auto-closed.` : '';
+    const { successful, failed, total } = request;
     
     chrome.notifications.create({
       type: 'basic',
       iconUrl: 'icons/icon48.png',
       title: 'Batch Processing Complete',
-      message: `${successful} of ${total} tabs processed successfully. ${failed} failed.${autoCloseText}`
+      message: `${successful} of ${total} tabs processed successfully. ${failed} failed.`
     });
   }
 });
@@ -1046,7 +969,6 @@ console.log(`Web App URL: ${CONFIG.APP_BASE_URL}`);
 console.log(`Multi-tab context menus: ${extensionSettings.enableMultiTab ? 'Enabled' : 'Disabled'}`);
 console.log(`Tab monitoring: ${CONFIG.MONITOR_ALL_TABS ? 'Enabled' : 'Disabled'}`);
 console.log(`Badge indicators: ${extensionSettings.showBadges ? 'Enabled' : 'Disabled'}`);
-console.log(`Auto-close processed tabs: ${extensionSettings.autoCloseProcessedTabs ? 'Enabled' : 'Disabled'}`);
 console.log('Enhanced PDF detection and server-side processing enabled');
 
 // Load settings on startup

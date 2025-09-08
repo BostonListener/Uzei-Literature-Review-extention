@@ -1252,7 +1252,7 @@ function selectTabs(mode) {
 }
 
 /**
- * Process selected tabs in batch
+ * Process selected tabs in batch - FIXED VERSION with proper progress bar completion
  */
 async function processSelectedTabs() {
   if (!loginStatus.isLoggedIn) {
@@ -1294,6 +1294,13 @@ async function processSelectedTabs() {
   const projectId = projectSelect.value;
   const sourceType = sourceTypeSelect.value;
   
+  // Function to update progress bar
+  const updateProgress = () => {
+    const percentage = (completed / total) * 100;
+    progressFill.style.width = `${percentage}%`;
+    progressText.textContent = `Completed ${completed} of ${total} tabs`;
+  };
+  
   // Process tabs with limited concurrency
   const semaphore = new Semaphore(CONFIG.MAX_CONCURRENT_TABS);
   
@@ -1310,22 +1317,20 @@ async function processSelectedTabs() {
         if (result.success) {
           successful++;
           successfulTabs.push({ tabId, title: result.title });
-          addBatchResult(`✓ ${result.title}`, 'success');
+          addBatchResult(`✅ ${result.title}`, 'success');
         } else {
           failed++;
-          addBatchResult(`✗ ${result.error}`, 'error');
+          addBatchResult(`❌ ${result.error}`, 'error');
         }
         
       } catch (error) {
         failed++;
-        addBatchResult(`✗ Tab ${tabId}: ${error.message}`, 'error');
+        addBatchResult(`❌ Tab ${tabId}: ${error.message}`, 'error');
       } finally {
         completed++;
         
-        // Update progress
-        const percentage = (completed / total) * 100;
-        progressFill.style.width = `${percentage}%`;
-        progressText.textContent = `Completed ${completed} of ${total} tabs`;
+        // Update progress immediately
+        updateProgress();
         
         release();
       }
@@ -1334,6 +1339,19 @@ async function processSelectedTabs() {
   
   // Wait for all processing to complete
   await Promise.all(processingPromises);
+  
+  // IMPORTANT: Ensure progress bar reaches 100% and UI is updated before showing dialogs
+  updateProgress(); // Final update to ensure 100%
+  
+  // Add a small delay to ensure UI rendering is complete
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  // Ensure progress bar shows 100% visually
+  progressFill.style.width = '100%';
+  progressText.textContent = `Completed ${total} of ${total} tabs`;
+  
+  // Add another small delay to let the 100% progress bar render
+  await new Promise(resolve => setTimeout(resolve, 200));
   
   // Show final results
   const statusMessage = `Batch processing complete: ${successful} successful, ${failed} failed`;
@@ -1356,8 +1374,11 @@ async function processSelectedTabs() {
     }
   }
   
-  // Show confirmation dialog for closing successfully processed tabs (multi-tab only)
+  // Show confirmation dialog for closing successfully processed tabs AFTER progress is complete
   if (successfulTabs.length > 0) {
+    // Additional small delay to ensure all UI updates are visually complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     const shouldClose = await showTabCloseConfirmation(successfulTabs);
     if (shouldClose) {
       const tabIdsToClose = successfulTabs.map(t => t.tabId);

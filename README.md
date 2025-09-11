@@ -1,5 +1,9 @@
 # Uzei - Literature Review Extension
 
+<p align="center">
+  <img src="icons/icon128.png" alt="Uzei Literature Review Extension" width="128" height="128">
+</p>
+
 A Chrome browser extension that automatically extracts and analyzes content from web pages and PDF documents, seamlessly integrating with your Uzei Literature Review web application for efficient research paper collection and management.
 
 ## Features

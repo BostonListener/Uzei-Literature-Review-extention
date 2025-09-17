@@ -14,7 +14,8 @@
     "scripting"
   ],
   "host_permissions": [
-    "https://uzei.bostonlistener-career.org/*"
+    "https://uzei.bostonlistener-career.org/*",
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "background.js"

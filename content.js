@@ -130,34 +130,7 @@ const CONFIG = {
     'iframe[src*=".pdf"]',
     'object[type="application/pdf"]',
     'embed[src*=".pdf"]',
-    'iframe[title*="pdf"]',
-    'iframe[title*="PDF"]',
-    'object[data*=".pdf"]',
-    '.pdf-viewer',
-    '#pdf-viewer',
-    '.document-viewer',
-    '#pdfViewer'
-  ],
-  
-  // PDF URL patterns for detection
-  PDF_URL_PATTERNS: [
-    '.pdf',
-    '/pdf/',
-    'pdf.',
-    'pdf_',
-    'document.pdf',
-    'paper.pdf',
-    'article.pdf',
-    '/viewer?',
-    '/document/',
-    '/paper/',
-    '/download/',
-    'arxiv.org/pdf/',
-    'researchgate.net',
-    'academia.edu',
-    'springer.com/pdf/',
-    'ieee.org/pdf/',
-    'acm.org/pdf/'
+    'object[data*=".pdf"]'
   ],
   
   // Academic publisher domains
@@ -197,99 +170,53 @@ function isAcademicPublisher() {
 }
 
 /**
- * Enhanced PDF page detection
+ * Enhanced PDF page detection - STRICT VERSION
+ * Only detects actual PDF viewer pages, not HTML pages with embedded PDFs
  */
 function isPDFPage() {
   const url = window.location.href.toLowerCase();
   
-  // Check URL patterns
-  for (const pattern of CONFIG.PDF_URL_PATTERNS) {
-    if (url.includes(pattern.toLowerCase())) {
-      return true;
-    }
-  }
-  
-  // Check content type meta tags
-  const contentType = document.querySelector('meta[http-equiv="content-type"]');
-  if (contentType && contentType.content.toLowerCase().includes('application/pdf')) {
+  // STRICT CHECK 1: URL must end with .pdf
+  if (url.endsWith('.pdf')) {
+    console.log('PDF detected: URL ends with .pdf');
     return true;
   }
   
-  // Check document title for PDF indicators
-  const title = document.title.toLowerCase();
-  if (title.includes('.pdf') || 
-      title.includes('pdf document') ||
-      title.includes('pdf viewer') ||
-      title.includes('document viewer')) {
+  // STRICT CHECK 2: PDF with query parameters or fragments
+  if (/\.pdf[?#]/i.test(url)) {
+    console.log('PDF detected: URL contains .pdf with params');
     return true;
   }
   
-  // Check for PDF embed elements
-  for (const selector of CONFIG.PDF_EMBED_SELECTORS) {
-    const element = document.querySelector(selector);
-    if (element) {
-      console.log(`PDF detected via selector: ${selector}`);
-      return true;
-    }
+  // STRICT CHECK 3: Check for actual PDF viewer indicators in the DOM
+  // Chrome's built-in PDF viewer
+  const embedElements = document.querySelectorAll('embed[type="application/pdf"]');
+  if (embedElements.length > 0) {
+    console.log('PDF detected: Chrome PDF viewer embed found');
+    return true;
   }
   
-  // Check for Chrome's PDF viewer
-  const embedElements = document.querySelectorAll('embed');
-  for (const embed of embedElements) {
-    if (embed.type === 'application/pdf' || 
-        (embed.src && embed.src.toLowerCase().includes('.pdf'))) {
-      console.log('PDF detected via embed element');
-      return true;
-    }
+  // Check for PDF.js viewer (used by Firefox)
+  if (document.querySelector('#viewerContainer') || 
+      document.querySelector('#outerContainer')) {
+    console.log('PDF detected: PDF.js viewer detected');
+    return true;
   }
   
-  // Check for iframe PDF viewers
-  const iframeElements = document.querySelectorAll('iframe');
-  for (const iframe of iframeElements) {
-    if (iframe.src && iframe.src.toLowerCase().includes('.pdf')) {
-      console.log('PDF detected via iframe element');
-      return true;
-    }
-  }
-  
-  // Check body attributes for PDF indicators
-  const body = document.body;
-  if (body) {
-    const bodyClass = body.className.toLowerCase();
-    const bodyId = body.id.toLowerCase();
-    
-    if (bodyClass.includes('pdf') || 
-        bodyClass.includes('document') ||
-        bodyId.includes('pdf') ||
-        bodyId.includes('document')) {
-      console.log('PDF detected via body attributes');
-      return true;
-    }
-  }
-  
-  // Check for minimal DOM structure (typical of PDF viewers)
+  // STRICT CHECK 4: Very minimal DOM with embed (actual PDF viewer)
   const bodyChildren = document.body ? document.body.children.length : 0;
-  if (bodyChildren <= 5 && embedElements.length > 0) {
-    console.log('PDF detected via minimal DOM structure');
+  if (bodyChildren <= 3 && embedElements.length > 0) {
+    console.log('PDF detected: Minimal DOM with PDF embed');
     return true;
   }
   
-  // Check for PDF viewer applications
-  const viewerIndicators = [
-    '#outerContainer', // PDF.js viewer
-    '.pdfViewer',
-    '.pdf-viewer',
-    '#viewerContainer',
-    '.documentViewer'
-  ];
-  
-  for (const indicator of viewerIndicators) {
-    if (document.querySelector(indicator)) {
-      console.log(`PDF detected via viewer indicator: ${indicator}`);
-      return true;
-    }
+  // For ArXiv, only if it's the actual PDF URL
+  if (url.includes('arxiv.org/pdf/') && url.match(/arxiv\.org\/pdf\/[\d.]+\.pdf/)) {
+    console.log('PDF detected: ArXiv direct PDF URL');
+    return true;
   }
   
+  console.log('Not a PDF page - treating as HTML content page');
   return false;
 }
 
@@ -309,7 +236,7 @@ function extractPDFMetadata() {
     // Clean up common PDF viewer title patterns
     title = title.replace(/\.pdf$/i, '');
     title = title.replace(/^PDF\.js viewer\s*-\s*/i, '');
-    title = title.replace(/\s*[-–]\s*[^-–]*$/, ''); // Remove trailing site name
+    title = title.replace(/\s*[-—]\s*[^-—]*$/, ''); // Remove trailing site name
     
     if (title && title.length > 3) {
       metadata.title = title;
@@ -486,8 +413,8 @@ function cleanAuthorName(name) {
   cleaned = cleaned
     .replace(/^(by|author|written by|posted by|created by)[:\s]*/gi, '')
     .replace(/\s*(writes|wrote|reports|says)$/gi, '')
-    .replace(/^\s*[-–—]\s*/, '') // Remove leading dashes
-    .replace(/\s*[-–—]\s*$/, '') // Remove trailing dashes
+    .replace(/^\s*[-—–]\s*/, '') // Remove leading dashes
+    .replace(/\s*[-—–]\s*$/, '') // Remove trailing dashes
     .replace(/\s*[|,]\s*$/, '') // Remove trailing pipes or commas
     .replace(/^\s*[|,]\s*/, '') // Remove leading pipes or commas
     .trim();
@@ -1076,7 +1003,7 @@ function extractTitleNonDestructive() {
   if (document.title) {
     let title = document.title.trim();
     // Clean up common patterns
-    title = title.replace(/\s*[-|–]\s*.*$/, '').trim(); // Remove site name
+    title = title.replace(/\s*[-|—]\s*.*$/, '').trim(); // Remove site name
     if (title.length > 3) {
       return title;
     }
@@ -1423,6 +1350,6 @@ if (typeof window.debugUzeiLiteratureReviewExtension === 'undefined') {
   };
 }
 
-console.log('Uzei - Literature Review Extension content script loaded successfully - ENHANCED PDF DETECTION');
+console.log('Uzei - Literature Review Extension content script loaded successfully - STRICT PDF DETECTION');
 
 }

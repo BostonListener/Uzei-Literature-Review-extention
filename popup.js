@@ -69,7 +69,8 @@ async function loadExtensionSettings() {
 }
 
 /**
- * Enhanced PDF URL detection with comprehensive patterns
+ * Enhanced PDF URL detection - STRICT VERSION
+ * Only detects direct PDF file URLs, not HTML pages with embedded PDFs
  */
 function isPDFUrl(url) {
   if (!url) return false;
@@ -78,109 +79,60 @@ function isPDFUrl(url) {
     const urlLower = url.toLowerCase();
     console.log(`Checking URL for PDF patterns: ${url}`);
     
-    // Direct PDF file URLs
+    // STRICT CHECK 1: Direct PDF file URLs - must end with .pdf
     if (urlLower.endsWith('.pdf')) {
       console.log('PDF detected: URL ends with .pdf');
       return true;
     }
     
-    // PDF with query parameters or fragments
-    if (urlLower.includes('.pdf?') || urlLower.includes('.pdf#')) {
+    // STRICT CHECK 2: PDF with query parameters or fragments - must have .pdf before them
+    const pdfWithParams = /\.pdf[?#]/i.test(url);
+    if (pdfWithParams) {
       console.log('PDF detected: URL contains .pdf with query/fragment');
       return true;
     }
     
-    // Common PDF viewer patterns
-    if (urlLower.includes('/pdf/') || 
-        urlLower.includes('pdf.') ||
-        urlLower.includes('pdf_') ||
-        urlLower.includes('document.pdf') ||
-        urlLower.includes('paper.pdf') ||
-        urlLower.includes('article.pdf') ||
-        urlLower.includes('file.pdf') ||
-        urlLower.includes('doc.pdf')) {
-      console.log('PDF detected: URL contains common PDF patterns');
+    // STRICT CHECK 3: Known direct PDF patterns only
+    // ArXiv direct PDF links
+    if (urlLower.includes('arxiv.org/pdf/') && urlLower.match(/arxiv\.org\/pdf\/[\d.]+\.pdf/)) {
+      console.log('PDF detected: ArXiv direct PDF URL');
       return true;
     }
     
-    // PDF viewer applications
-    if (urlLower.includes('pdfviewer') ||
-        urlLower.includes('pdf-viewer') ||
-        urlLower.includes('documentviewer') ||
-        urlLower.includes('viewer.html') ||
-        urlLower.includes('pdfjs')) {
-      console.log('PDF detected: URL contains PDF viewer patterns');
+    // ResearchGate direct download links
+    if (urlLower.includes('researchgate.net') && urlLower.includes('/publication/') && urlLower.endsWith('.pdf')) {
+      console.log('PDF detected: ResearchGate direct PDF');
       return true;
     }
     
-    // Academic sites PDF patterns
-    if ((urlLower.includes('arxiv.org') && urlLower.includes('/pdf/')) ||
-        (urlLower.includes('researchgate.net') && urlLower.includes('.pdf')) ||
-        (urlLower.includes('academia.edu') && urlLower.includes('.pdf')) ||
-        (urlLower.includes('springer.com') && urlLower.includes('/pdf/')) ||
-        (urlLower.includes('ieee.org') && urlLower.includes('/pdf/')) ||
-        (urlLower.includes('acm.org') && urlLower.includes('/pdf/')) ||
-        (urlLower.includes('sciencedirect.com') && urlLower.includes('/pdf/')) ||
-        (urlLower.includes('nature.com') && urlLower.includes('.pdf')) ||
-        (urlLower.includes('wiley.com') && urlLower.includes('.pdf'))) {
-      console.log('PDF detected: Academic site PDF URL');
+    // STRICT CHECK 4: Repository and document hosting patterns - must end with .pdf
+    if ((urlLower.includes('github.com') || 
+         urlLower.includes('dropbox.com') ||
+         urlLower.includes('onedrive.com') ||
+         urlLower.includes('box.com')) && urlLower.endsWith('.pdf')) {
+      console.log('PDF detected: Document hosting service with direct PDF');
       return true;
     }
     
-    // Repository and document hosting patterns
-    if ((urlLower.includes('github.com') && urlLower.includes('.pdf')) ||
-        (urlLower.includes('dropbox.com') && urlLower.includes('.pdf')) ||
-        (urlLower.includes('drive.google.com') && urlLower.includes('pdf')) ||
-        (urlLower.includes('onedrive.com') && urlLower.includes('.pdf')) ||
-        (urlLower.includes('box.com') && urlLower.includes('.pdf'))) {
-      console.log('PDF detected: Document hosting service');
+    // STRICT CHECK 5: Google Drive direct PDF view links
+    if (urlLower.includes('drive.google.com') && 
+        (urlLower.includes('/file/d/') || urlLower.includes('export=download')) &&
+        (urlLower.includes('pdf') || urlLower.includes('view'))) {
+      console.log('PDF detected: Google Drive PDF link');
       return true;
     }
     
-    // Advanced URL object analysis
+    // Advanced URL object analysis - STRICT version
     const urlObj = new URL(url);
     const pathname = urlObj.pathname.toLowerCase();
     
-    if (pathname.includes('.pdf') || 
-        pathname.includes('/pdf/') ||
-        pathname.includes('/document/') ||
-        pathname.includes('/paper/') ||
-        pathname.includes('/article/') ||
-        pathname.includes('/download/') ||
-        pathname.includes('/attachment/')) {
-      
-      // Additional verification for PDF-specific patterns
-      if (urlObj.search.includes('pdf') || 
-          urlObj.hash.includes('pdf') ||
-          pathname.endsWith('/pdf') ||
-          pathname.includes('pdf-') ||
-          pathname.includes('_pdf') ||
-          urlObj.search.includes('download') ||
-          urlObj.search.includes('attachment')) {
-        console.log('PDF detected: URL object analysis found PDF patterns');
-        return true;
-      }
+    // Only if pathname actually ends with .pdf
+    if (pathname.endsWith('.pdf')) {
+      console.log('PDF detected: Pathname ends with .pdf');
+      return true;
     }
     
-    // Check hostname for PDF service indicators
-    const hostname = urlObj.hostname.toLowerCase();
-    if (hostname.includes('pdf') || 
-        hostname.includes('document') ||
-        hostname.includes('paper') ||
-        hostname.includes('docs') ||
-        hostname.includes('viewer')) {
-      
-      if (pathname.includes('view') || 
-          pathname.includes('download') ||
-          pathname.includes('file') ||
-          urlObj.search.includes('pdf') ||
-          urlObj.search.includes('document')) {
-        console.log('PDF detected: Hostname and path analysis');
-        return true;
-      }
-    }
-    
-    console.log('No PDF patterns detected in URL');
+    console.log('No PDF patterns detected in URL - treating as HTML page');
     return false;
   } catch (error) {
     console.warn('Error checking PDF URL:', error);
@@ -189,66 +141,39 @@ function isPDFUrl(url) {
 }
 
 /**
- * Enhanced PDF detection using tab properties
+ * Enhanced PDF detection using tab properties - STRICT VERSION
  */
 async function isPDFTab(tab) {
   if (!tab) return false;
   
   console.log(`Checking if tab is PDF: ${tab.url}`);
   
-  // Check URL first
+  // Check URL first with strict detection
   if (isPDFUrl(tab.url)) {
-    console.log('PDF detected via URL analysis');
+    console.log('PDF detected via strict URL analysis');
     return true;
   }
   
-  // Check tab title for PDF indicators
-  if (tab.title) {
-    const titleLower = tab.title.toLowerCase();
-    if (titleLower.includes('.pdf') || 
-        titleLower.includes('pdf document') ||
-        titleLower.includes('pdf viewer') ||
-        titleLower.includes('document viewer') ||
-        titleLower.endsWith('.pdf')) {
-      console.log('PDF detected via tab title');
-      return true;
-    }
-  }
-  
-  // Check for additional PDF-like patterns
-  const url = tab.url.toLowerCase();
-  const additionalPDFPatterns = [
-    'viewer?',
-    'document/',
-    'paper/',
-    'download',
-    'attachment',
-    'file.pdf',
-    'doc.pdf',
-    'paper.pdf',
-    'article.pdf'
-  ];
-  
-  for (const pattern of additionalPDFPatterns) {
-    if (url.includes(pattern) && (url.includes('pdf') || url.includes('document') || url.includes('paper'))) {
-      console.log(`PDF detected via additional pattern: ${pattern}`);
-      return true;
-    }
+  // Check tab title ONLY if it literally ends with .pdf
+  if (tab.title && tab.title.toLowerCase().endsWith('.pdf')) {
+    console.log('PDF detected via tab title ending with .pdf');
+    return true;
   }
   
   // Try to detect from content script if available
+  // This will detect embedded PDF viewers in the browser
   try {
     const response = await chrome.tabs.sendMessage(tab.id, { action: 'isPDF' });
     if (response && response.isPDF) {
-      console.log('PDF detected via content script');
+      console.log('PDF detected via content script - embedded viewer detected');
       return true;
     }
   } catch (error) {
-    // Content script not available - normal for PDFs
-    console.log('Could not check PDF status via content script (normal for PDFs)');
+    // Content script not available - normal for actual PDFs
+    console.log('Could not check PDF status via content script (normal for direct PDF links)');
   }
   
-  console.log('Not detected as PDF');
+  console.log('Not detected as PDF - treating as regular web page');
   return false;
 }
 

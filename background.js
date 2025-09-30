@@ -30,25 +30,9 @@ const CONFIG = {
   SESSION_CHECK_INTERVAL: 300000, // 5 minutes
   SESSION_COOKIE_NAME: 'session',
   
-  // PDF detection patterns
+  // PDF detection patterns - STRICT VERSION
   PDF_URL_PATTERNS: [
-    '.pdf',
-    '/pdf/',
-    'pdf.',
-    'pdf_',
-    'document.pdf',
-    'paper.pdf',
-    'article.pdf',
-    '/viewer?',
-    '/document/',
-    '/paper/',
-    '/download/',
-    'arxiv.org/pdf/',
-    'researchgate.net',
-    'academia.edu',
-    'springer.com/pdf/',
-    'ieee.org/pdf/',
-    'acm.org/pdf/'
+    '.pdf'
   ]
 };
 
@@ -110,7 +94,7 @@ async function loadExtensionSettings() {
 }
 
 /**
- * Check if URL points to a PDF document
+ * Check if URL points to a PDF document - STRICT VERSION
  */
 function isPDFUrl(url) {
   if (!url) return false;
@@ -118,27 +102,28 @@ function isPDFUrl(url) {
   try {
     const urlLower = url.toLowerCase();
     
-    // Check against all PDF patterns
-    for (const pattern of CONFIG.PDF_URL_PATTERNS) {
-      if (urlLower.includes(pattern.toLowerCase())) {
-        return true;
-      }
-    }
-    
-    // Check for PDF query parameters and fragments
-    if (urlLower.includes('.pdf?') || urlLower.includes('.pdf#')) {
+    // STRICT CHECK 1: Direct PDF file URLs - must end with .pdf
+    if (urlLower.endsWith('.pdf')) {
       return true;
     }
     
-    // Check URL pathname for PDF patterns
+    // STRICT CHECK 2: PDF with query parameters or fragments
+    if (/\.pdf[?#]/i.test(url)) {
+      return true;
+    }
+    
+    // STRICT CHECK 3: Known direct PDF patterns only
+    // ArXiv direct PDF links
+    if (urlLower.includes('arxiv.org/pdf/') && urlLower.match(/arxiv\.org\/pdf\/[\d.]+\.pdf/)) {
+      return true;
+    }
+    
+    // Advanced URL object analysis - STRICT version
     const urlObj = new URL(url);
     const pathname = urlObj.pathname.toLowerCase();
     
-    if (pathname.includes('.pdf') || 
-        pathname.includes('/pdf/') ||
-        pathname.includes('/document/') ||
-        pathname.includes('/paper/') ||
-        pathname.includes('/article/')) {
+    // Only if pathname actually ends with .pdf
+    if (pathname.endsWith('.pdf')) {
       return true;
     }
     
@@ -969,7 +954,7 @@ console.log(`Web App URL: ${CONFIG.APP_BASE_URL}`);
 console.log(`Multi-tab context menus: ${extensionSettings.enableMultiTab ? 'Enabled' : 'Disabled'}`);
 console.log(`Tab monitoring: ${CONFIG.MONITOR_ALL_TABS ? 'Enabled' : 'Disabled'}`);
 console.log(`Badge indicators: ${extensionSettings.showBadges ? 'Enabled' : 'Disabled'}`);
-console.log('Enhanced PDF detection and server-side processing enabled');
+console.log('STRICT PDF detection enabled - only direct PDF URLs');
 
 // Load settings on startup
 loadExtensionSettings();

@@ -19,7 +19,7 @@ A Chrome browser extension that automatically extracts and analyzes content from
 ## Prerequisites
 
 - Google Chrome browser
-- Access to the Uzei Literature Review web application at `https://uzei.bostonlistener-career.org`
+- Access to the Uzei Literature Review web application at `https://uzei.boslis.com`
 - Valid user account on the web application
 
 ## Installation (Developer Mode)
@@ -69,7 +69,7 @@ uzei-literature-review-extension/
 
 ### Initial Setup
 
-1. **Log into the Web App**: Visit `https://uzei.bostonlistener-career.org` and log in with your credentials
+1. **Log into the Web App**: Visit `https://uzei.boslis.com` and log in with your credentials
 2. **Create a Project**: Create or select a literature review project in the web app
 3. **Verify Connection**: The extension icon should show a green checkmark when logged in
 
@@ -135,7 +135,7 @@ For issues or questions:
 
 **Version**: 2.1  
 **Compatibility**: Chrome (Manifest V3)  
-**Web App**: https://uzei.bostonlistener-career.org
+**Web App**: https://uzei.boslis.com
 
 ## Help Us Keep This Project Running
 

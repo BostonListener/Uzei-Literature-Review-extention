@@ -9,7 +9,7 @@
 // Popup configuration settings
 const CONFIG = {
   // Web app configuration
-  APP_BASE_URL: 'https://uzei.bostonlistener-career.org',
+  APP_BASE_URL: 'https://uzei.boslis.com',
   API_TIMEOUT: 60000,  // 60 seconds
   
   // UI settings
@@ -26,7 +26,7 @@ const CONFIG = {
   
   // Tab filtering - exclude these from processing
   INVALID_PROTOCOLS: ['chrome:', 'chrome-extension:', 'moz-extension:', 'about:', 'data:', 'javascript:'],
-  INVALID_HOSTS: ['uzei.bostonlistener-career.org'],  // Don't process our own app
+  INVALID_HOSTS: ['uzei.boslis.com'],  // Don't process our own app
 };
 
 // Global state management

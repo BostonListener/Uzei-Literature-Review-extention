@@ -9,7 +9,7 @@
 // Extension configuration
 const CONFIG = {
   // Web app settings
-  APP_BASE_URL: 'https://uzei.bostonlistener-career.org',
+  APP_BASE_URL: 'https://uzei.boslis.com',
   
   // Context menu settings
   CONTEXT_MENU_ENABLED: true,
@@ -289,7 +289,7 @@ function isValidTabUrl(url) {
     }
     
     // Skip our own app to avoid processing app pages
-    if (urlObj.hostname === 'uzei.bostonlistener-career.org') {
+    if (urlObj.hostname === 'uzei.boslis.com') {
       return false;
     }
     

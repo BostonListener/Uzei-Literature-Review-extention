@@ -9,7 +9,7 @@
 // Default configuration settings
 const DEFAULT_CONFIG = {
   // Web app settings - fixed deployed URL
-  APP_BASE_URL: 'https://uzei.bostonlistener-career.org',
+  APP_BASE_URL: 'https://uzei.boslis.com',
   CONNECTION_TIMEOUT: 5000,  // 5 seconds
   
   // Extension behavior defaults
@@ -320,7 +320,7 @@ function setupEventListeners() {
   document.getElementById('reset-settings')?.addEventListener('click', resetSettings);
   
   // External links - open web app
-  const webAppLinks = document.querySelectorAll('.btn-open-webapp, a[href*="uzei.bostonlistener-career.org"]');
+  const webAppLinks = document.querySelectorAll('.btn-open-webapp, a[href*="uzei.boslis.com"]');
   webAppLinks.forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();

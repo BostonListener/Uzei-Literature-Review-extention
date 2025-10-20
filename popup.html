@@ -6,14 +6,24 @@
         /* Main popup layout */
         body {
             width: 450px;
-            min-height: 400px;
             margin: 0;
             padding: 16px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             font-size: 14px;
             background: #f8f9fa;
+            transition: min-height 0.3s ease;
         }
         
+        /* Single tab mode - compact height */
+        body.single-mode {
+            min-height: 400px;
+        }
+
+        /* Multi-tab mode - taller to accommodate tab list and controls */
+        body.multi-mode {
+            min-height: 600px;
+        }
+
         /* Header section with logo and login status */
         .header {
             display: flex;

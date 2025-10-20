@@ -1673,6 +1673,10 @@ function switchMode(newMode) {
     multiSection.classList.remove('active');
     singleSection.style.display = 'block';
     multiSection.style.display = 'none';
+    
+    // Add/remove body classes for adaptive height
+    document.body.classList.add('single-mode');
+    document.body.classList.remove('multi-mode');
   } else {
     singleBtn.classList.remove('active');
     multiBtn.classList.add('active');
@@ -1680,6 +1684,10 @@ function switchMode(newMode) {
     multiSection.classList.add('active');
     singleSection.style.display = 'none';
     multiSection.style.display = 'block';
+    
+    // Add/remove body classes for adaptive height
+    document.body.classList.add('multi-mode');
+    document.body.classList.remove('single-mode');
     
     // Load tabs when switching to multi-tab mode
     if (loginStatus.isLoggedIn) {
@@ -1727,6 +1735,9 @@ async function initialize() {
     return;
   }
   window.popupInitialized = true;
+  
+  // Set initial mode class on body
+  document.body.classList.add('single-mode');
   
   // Load extension settings first
   await loadExtensionSettings();

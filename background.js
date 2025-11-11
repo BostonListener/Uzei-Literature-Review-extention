@@ -28,7 +28,6 @@ const CONFIG = {
   
   // Session checking
   SESSION_CHECK_INTERVAL: 300000, // 5 minutes
-  SESSION_COOKIE_NAME: 'session',
   
   // PDF detection patterns - STRICT VERSION
   PDF_URL_PATTERNS: [

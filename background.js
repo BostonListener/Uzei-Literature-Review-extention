@@ -165,18 +165,7 @@ async function tabExists(tabId) {
  */
 async function checkLoginStatus() {
   try {
-    // Check session cookies first
-    const cookies = await chrome.cookies.getAll({
-      url: CONFIG.APP_BASE_URL,
-      name: CONFIG.SESSION_COOKIE_NAME
-    });
-    
-    if (!cookies || cookies.length === 0) {
-      userLoginStatus = { isLoggedIn: false, username: null, lastCheck: Date.now() };
-      return userLoginStatus;
-    }
-    
-    // Verify session with server
+    // Verify session with server directly
     const response = await fetch(`${CONFIG.APP_BASE_URL}/api/check_session`, {
       method: 'GET',
       credentials: 'include',

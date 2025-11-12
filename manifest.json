@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Uzei - Literature Review",
-  "version": "2.7",
+  "version": "2.8",
   "description": "Collect web articles and papers for your Uzei literature review project",
   "permissions": [
     "tabs",
